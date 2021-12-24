@@ -53,7 +53,7 @@ Eigen::Matrix4f get_projection_matrix(float eye_fov, float aspect_ratio,
     float eye_tan = std::tan(0.5 * radian);
     translate << 1.0 / (aspect_ratio * eye_tan), 0, 0, 0,
                  0, 1.0 / eye_tan, 0, 0, 
-                 0, 0, (zNear + zFar) / (zNear - zFar),  (-2 * zNear * zFar) / (zNear - zFar),
+                 0, 0, (zFar + zNear) / (zFar - zNear),  (2 * zFar * zNear) / (zFar - zNear),
                  0, 0, -1, 0;
 
     projection = projection * translate;
