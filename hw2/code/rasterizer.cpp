@@ -40,7 +40,7 @@ auto to_vec4(const Eigen::Vector3f& v3, float w = 1.0f)
 }
 
 
-static bool helper(int x, int y, Vector3f v1, Vector3f v2) {
+static bool helper(float x, float y, Vector3f v1, Vector3f v2) {
     Vector2f p(x, y);
     Vector2f a(v1.x(), v1.y());
     Vector2f b(v2.x(), v2.y());
@@ -52,7 +52,7 @@ static bool helper(int x, int y, Vector3f v1, Vector3f v2) {
     return z >= 0;
 }
 
-static bool insideTriangle(int x, int y, const Vector3f* _v)
+static bool insideTriangle(float x, float y, const Vector3f* _v)
 {   
     // TODO : Implement this function to check if the point (x, y) is inside the triangle represented by _v[0], _v[1], _v[2]
     if (!helper(x, y, _v[0], _v[1])) {
@@ -149,8 +149,9 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
 
     for (int x = minX; x <= maxX; ++x) {
         for (int y = minY; y <= maxY; ++y) {
-            if (insideTriangle(x, y, t.v)) {
-                auto [alpha, beta, gamma] = computeBarycentric2D(float(x), float(y), t.v);
+            float x_pos = x + 0.5, y_pos = y + 0.5;
+            if (insideTriangle(x_pos, y_pos, t.v)) {
+                auto [alpha, beta, gamma] = computeBarycentric2D(x_pos, y_pos, t.v);
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
