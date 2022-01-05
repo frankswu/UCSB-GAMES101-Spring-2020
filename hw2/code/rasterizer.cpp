@@ -147,11 +147,38 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
 
     // TODO : set the current pixel (use the set_pixel function) to the color of the triangle (use getColor function) if it should be painted.
 
+    // for (int x = minX; x <= maxX; ++x) {
+    //     for (int y = minY; y <= maxY; ++y) {
+    //         float x_pos = x + 0.5, y_pos = y + 0.5;
+    //         if (insideTriangle(x_pos, y_pos, t.v)) {
+    //             auto [alpha, beta, gamma] = computeBarycentric2D(x_pos, y_pos, t.v);
+    //             float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+    //             float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+    //             z_interpolated *= w_reciprocal;
+                
+    //             int ind = get_index(x, y);
+    //             if (depth_buf[ind] > -z_interpolated) {
+    //                 depth_buf[ind] = -z_interpolated;
+    //                 set_pixel(Vector3f(x, y, z_interpolated), t.getColor());
+    //             }
+    //         }    
+    //     }
+    // }
+
+    std::vector<float> X = {0.25, 0.25, 0.75, 0.75};
+    std::vector<float> Y = {0.25, 0.75, 0.25, 0.75};
+
     for (int x = minX; x <= maxX; ++x) {
         for (int y = minY; y <= maxY; ++y) {
-            float x_pos = x + 0.5, y_pos = y + 0.5;
-            if (insideTriangle(x_pos, y_pos, t.v)) {
-                auto [alpha, beta, gamma] = computeBarycentric2D(x_pos, y_pos, t.v);
+            int cnt = 0;
+            for (int i = 0; i < X.size(); ++i) {
+                float x_pos = x + X[i], y_pos = y + Y[i];
+                if (insideTriangle(x_pos, y_pos, t.v)) {
+                    ++cnt;
+                }
+            }
+            if (cnt) {
+                auto [alpha, beta, gamma] = computeBarycentric2D(x+0.5, y+0.5, t.v);
                 float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
                 float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
                 z_interpolated *= w_reciprocal;
@@ -159,7 +186,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t) {
                 int ind = get_index(x, y);
                 if (depth_buf[ind] > -z_interpolated) {
                     depth_buf[ind] = -z_interpolated;
-                    set_pixel(Vector3f(x, y, z_interpolated), t.getColor());
+                    set_pixel(Vector3f(x, y, z_interpolated), t.getColor()*cnt/X.size());
                 }
             }    
         }
