@@ -96,7 +96,7 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
     if (payload.texture)
     {
         // TODO: Get the texture value at the texture coordinates of the current fragment
-
+        return_color = payload.texture->getColor(payload.tex_coords[0], payload.tex_coords[1]);
     }
     Eigen::Vector3f texture_color;
     texture_color << return_color.x(), return_color.y(), return_color.z();
@@ -124,7 +124,14 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
     {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-
+        auto l = (light.position - point).normalized();
+        auto e = (eye_pos - point).normalized();
+        auto h = (l + e).normalized();
+        auto r = (light.position - point).norm();
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(light.intensity / pow(r, 2)) * std::max(0.0f, normal.dot(l));
+        auto specular = ks.cwiseProduct(light.intensity / pow(r, 2)) * pow(std::max(0.0f, normal.dot(h)), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
@@ -154,7 +161,14 @@ Eigen::Vector3f phong_fragment_shader(const fragment_shader_payload& payload)
     {
         // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
         // components are. Then, accumulate that result on the *result_color* object.
-        
+        auto l = (light.position - point).normalized();
+        auto e = (eye_pos - point).normalized();
+        auto h = (l + e).normalized();
+        auto r = (light.position - point).norm();
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(light.intensity / pow(r, 2)) * std::max(0.0f, normal.dot(l));
+        auto specular = ks.cwiseProduct(light.intensity / pow(r, 2)) * pow(std::max(0.0f, normal.dot(h)), p);
+        result_color += ambient + diffuse + specular;
     }
 
     return result_color * 255.f;
