@@ -280,7 +280,46 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
     // Use: Instead of passing the triangle's color directly to the frame buffer, pass the color to the shaders first to get the final color;
     // Use: auto pixel_color = fragment_shader(payload);
 
- 
+    auto v = t.toVector4();
+
+    int minX = 1e9, maxX = -1, minY = 1e9, maxY = -1;
+    for (auto p : t.v) {
+        minX = std::min(minX, int(floor(p.x())));
+        maxX = std::max(maxX, int(ceil(p.x())));
+        minY = std::min(minY, int(floor(p.y())));
+        maxY = std::max(maxY, int(ceil(p.y())));
+    }
+
+    for (int x = minX; x <= maxX; ++x) {
+        for (int y = minY; y <= maxY; ++y) {
+            float x_pos = x + 0.5, y_pos = y + 0.5;
+            if (insideTriangle(x_pos, y_pos, t.v)) {
+                auto [alpha, beta, gamma] = computeBarycentric2D(x_pos, y_pos, t.v);
+                float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+                float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+                z_interpolated *= w_reciprocal;
+                
+                int ind = get_index(x, y);
+                if (depth_buf[ind] > -z_interpolated) {
+                    auto weight = alpha + beta + gamma;
+                    // alpha、beta、gamma -- projection space 计算, 再转换为view space?
+                    // 底纹颜色、法向量、uv坐标、点坐标 -- view space 插值
+                    auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1], t.color[2], weight);
+                    auto interpolated_normal = interpolate(alpha, beta, gamma, t.normal[0], t.normal[1], t.normal[2], weight);
+                    auto interpolated_texcoords = interpolate(alpha, beta, gamma, t.tex_coords[0], t.tex_coords[1], t.tex_coords[2], weight);
+                    auto interpolated_shadingcoords = interpolate(alpha, beta, gamma, view_pos[0], view_pos[1], view_pos[2], weight);
+
+                    fragment_shader_payload payload(interpolated_color, interpolated_normal.normalized(), interpolated_texcoords, texture ? &*texture : nullptr);
+                    payload.view_pos = interpolated_shadingcoords;
+                    auto pixel_color = fragment_shader(payload);
+
+                    depth_buf[ind] = -z_interpolated;
+                    set_pixel(Vector2i(x, y), pixel_color);
+                }
+            }    
+        }
+    }
+
 }
 
 void rst::rasterizer::set_model(const Eigen::Matrix4f& m)
