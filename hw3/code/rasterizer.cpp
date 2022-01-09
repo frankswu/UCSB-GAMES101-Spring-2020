@@ -294,16 +294,23 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
         for (int y = minY; y <= maxY; ++y) {
             float x_pos = x + 0.5, y_pos = y + 0.5;
             if (insideTriangle(x_pos, y_pos, t.v)) {
+                // 根据投影后的重心坐标可以求出投影前的z值(透视投影校正)
+                // v[i].w()等于投影前的z值(透视矩阵性质)
+                // zp乘以v[i].z()是因为它求的是视口变换后的z值(mvp+viewport)
                 auto [alpha, beta, gamma] = computeBarycentric2D(x_pos, y_pos, t.v);
-                float w_reciprocal = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
-                float z_interpolated = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
-                z_interpolated *= w_reciprocal;
+                float Z = 1.0/(alpha / v[0].w() + beta / v[1].w() + gamma / v[2].w());
+                float zp = alpha * v[0].z() / v[0].w() + beta * v[1].z() / v[1].w() + gamma * v[2].z() / v[2].w();
+                zp *= Z;
                 
                 int ind = get_index(x, y);
-                if (depth_buf[ind] > -z_interpolated) {
+                if (depth_buf[ind] > -zp) {
                     auto weight = alpha + beta + gamma;
-                    // alpha、beta、gamma -- projection space 计算, 再转换为view space?
+                    // alpha、beta、gamma -- projection space 计算，再进行透视投影校正变换为view space
                     // 底纹颜色、法向量、uv坐标、点坐标 -- view space 插值
+                    alpha *= Z / v[0].w();
+                    beta *= Z / v[1].w();
+                    gamma *= Z / v[2].w();
+
                     auto interpolated_color = interpolate(alpha, beta, gamma, t.color[0], t.color[1], t.color[2], weight);
                     auto interpolated_normal = interpolate(alpha, beta, gamma, t.normal[0], t.normal[1], t.normal[2], weight);
                     auto interpolated_texcoords = interpolate(alpha, beta, gamma, t.tex_coords[0], t.tex_coords[1], t.tex_coords[2], weight);
@@ -313,7 +320,7 @@ void rst::rasterizer::rasterize_triangle(const Triangle& t, const std::array<Eig
                     payload.view_pos = interpolated_shadingcoords;
                     auto pixel_color = fragment_shader(payload);
 
-                    depth_buf[ind] = -z_interpolated;
+                    depth_buf[ind] = -zp;
                     set_pixel(Vector2i(x, y), pixel_color);
                 }
             }    

@@ -45,7 +45,8 @@ void Triangle::setTexCoord(int ind, Vector2f uv) {
 std::array<Vector4f, 3> Triangle::toVector4() const
 {
     std::array<Vector4f, 3> res;
-    std::transform(std::begin(v), std::end(v), res.begin(), [](auto& vec) { return Vector4f(vec.x(), vec.y(), vec.z(), 1.f); });
+    // 这里应该返回vec.w(), 但是实际上w应该被约掉了, 返回数值是多少并没有影响
+    std::transform(std::begin(v), std::end(v), res.begin(), [](auto& vec) { return Vector4f(vec.x(), vec.y(), vec.z(), vec.w()); });
     return res;
 }
 
