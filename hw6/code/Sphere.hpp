@@ -62,8 +62,8 @@ public:
         result.m = this->m;
         result.obj = this;
         result.distance = t0;
+        
         return result;
-
     }
     void getSurfaceProperties(const Vector3f &P, const Vector3f &I, const uint32_t &index, const Vector2f &uv, Vector3f &N, Vector2f &st) const
     { N = normalize(P - center); }
