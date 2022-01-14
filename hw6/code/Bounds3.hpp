@@ -99,7 +99,7 @@ inline bool Bounds3::IntersectP(const Ray& ray, const Vector3f& invDir,
     auto o = ray.origin;
     Vector3f tmin = {(pMin.x - o.x) * invDir.x, (pMin.y - o.y) * invDir.y, (pMin.z - o.z) * invDir.z};
     Vector3f tmax = {(pMax.x - o.x) * invDir.x, (pMax.y - o.y) * invDir.y, (pMax.z - o.z) * invDir.z};
-    Vector3f rev = {dirIsNeg[0] > 0 ? dirIsNeg[0] : -1, dirIsNeg[1] > 0 ? dirIsNeg[1] : -1, dirIsNeg[2] > 0 ? dirIsNeg[2] : -1};
+    Vector3f rev = {dirIsNeg[0] > 0 ? 1.0f : -1.0f, dirIsNeg[1] > 0 ? 1.0f : -1.0f, dirIsNeg[2] > 0 ? 1.0f : -1.0f};
     tmin = rev * tmin;
     tmax = rev * tmax;
 
