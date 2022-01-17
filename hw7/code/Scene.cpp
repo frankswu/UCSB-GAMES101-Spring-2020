@@ -62,9 +62,23 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 {
     // TO DO Implement Path Tracing Algorithm here
 
-    auto p = ray.origin;
-    auto wo = ray.direction;
-    auto N = Vector3f(0, -1, 0);
+    Intersection intersection = intersect(ray);
+
+    if (!intersection.happened) {
+        return Vector3f(0.0f);
+    }
+
+    // (1) 直接看到光源
+    if (intersection.obj->hasEmit()) {
+        return Vector3f(1.0f);
+    }
+
+    // (2) L_dir: 光源照射到物体一次反射到眼中
+    // (3) L_indir: 光源经过多次反射照射到物体再反射到眼中
+
+    auto p = intersection.coords;
+    auto wo = -ray.direction;
+    auto N = intersection.normal;
 
     Intersection inter;
     float pdf_light;
@@ -79,23 +93,18 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     Intersection hit1 = intersect(Ray(p, ws));
     auto eps = 1e-3;
     if ((x - hit1.coords).norm() <= eps) {
-        L_dir = emit * hit1.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(ws, NN) / (hit1.distance * hit1.distance) / pdf_light;
+        L_dir = emit * hit1.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(-ws, NN) / (hit1.distance * hit1.distance) / pdf_light;
     }
 
     auto L_indir = Vector3f();
     if (get_random_float() <= RussianRoulette) {
-        auto wi = Material().sample(wo, N);
+        auto wi = intersection.m->sample(wo, N);
         Intersection hit2 = intersect(Ray(p, wi)); 
         auto q = hit2.coords;
-        if (hit2.obj != nullptr && !hit2.obj->hasEmit()) {
+        if (hit2.happened && !hit2.obj->hasEmit()) {
             L_indir = castRay(Ray(q, wi), depth+1) * hit2.m->eval(wo, wi, N) * dotProduct(wi, N) / hit2.m->pdf(wo, wi, N) / RussianRoulette;
         }     
     }
-
-    // std::cout << L_dir + L_indir << std::endl;
-    // if (L_indir.norm() > 0)
-    //     std::cout << L_indir << std::endl;
-    // std::cout << std::endl;
 
     return L_dir + L_indir;
 }
