@@ -93,7 +93,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     Intersection hit1 = intersect(Ray(p, ws));
     auto eps = 1e-3;
     if ((x - hit1.coords).norm() <= eps) {
-        L_dir = emit * hit1.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(-ws, NN) / (hit1.distance * hit1.distance) / pdf_light;
+        L_dir = emit * intersection.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(-ws, NN) / (hit1.distance * hit1.distance) / pdf_light;
     }
 
     auto L_indir = Vector3f();

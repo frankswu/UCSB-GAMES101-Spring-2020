@@ -51,3 +51,18 @@ inline void UpdateProgress(float progress)
     std::cout << "] " << int(progress * 100.0) << " %\r";
     std::cout.flush();
 };
+
+inline void UpdateProgress_thread(float progress, int thread_seq)
+{
+    int barWidth = 70;
+
+    std::cout << "[";
+    int pos = barWidth * progress;
+    for (int i = 0; i < barWidth; ++i) {
+        if (i < pos) std::cout << "=";
+        else if (i == pos) std::cout << ">";
+        else std::cout << " ";
+    }
+    std::cout << "] " << int(progress * 100.0) << " % (thread_seq: " << thread_seq << ")\r";
+    std::cout.flush();
+};
