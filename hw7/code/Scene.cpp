@@ -91,18 +91,17 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     auto L_dir = Vector3f();
 
     Intersection hit1 = intersect(Ray(p, ws));
-    auto eps = 1e-3;
+    auto eps = 1e-2;
     if ((x - hit1.coords).norm() <= eps) {
-        L_dir = emit * intersection.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(-ws, NN) / (hit1.distance * hit1.distance) / pdf_light;
+        L_dir = emit * intersection.m->eval(ws, wo, N) * dotProduct(ws, N) * dotProduct(-ws, NN) / ((hit1.distance * hit1.distance) * pdf_light);
     }
 
     auto L_indir = Vector3f();
-    if (get_random_float() <= RussianRoulette) {
+    if (get_random_float() < RussianRoulette) {
         auto wi = intersection.m->sample(wo, N);
         Intersection hit2 = intersect(Ray(p, wi)); 
-        auto q = hit2.coords;
         if (hit2.happened && !hit2.obj->hasEmit()) {
-            L_indir = castRay(Ray(q, wi), depth+1) * hit2.m->eval(wo, wi, N) * dotProduct(wi, N) / hit2.m->pdf(wo, wi, N) / RussianRoulette;
+            L_indir = castRay(Ray(p, wi), depth+1) * intersection.m->eval(wi, wo, N) * dotProduct(wi, N) / (intersection.m->pdf(wi, wo, N) * RussianRoulette);
         }     
     }
 
